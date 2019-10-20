@@ -1,6 +1,7 @@
-# OpenVPN Client
+# OpenVPN Proxy Client
 #
-# based on https://github.com/haugene/docker-transmission-openvpn
+# Based on https://github.com/schmas/docker-openvpn-proxy
+# and https://github.com/ericdraken/docker-openvpn-client
 #
 # Version 0.0.2
 #
@@ -9,7 +10,7 @@
 # for a list of version numbers.
 
 FROM phusion/baseimage:master
-MAINTAINER Diego Schmidt <dceschmidt@gmail.com>
+MAINTAINER Eric Draken <ericdraken@gmail.com>
 
 # Evironment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -20,14 +21,20 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Use baseimage-docker's init system.
 CMD ["/sbin/my_init"]
 
-# Update packages and install software
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get install -y openvpn inetutils-traceroute inetutils-ping wget curl \
-    && curl -L https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz | tar -C /usr/local/bin -xzv \
-    && rm -rfv dockerize-linux-amd64-v0.6.1.tar.gz \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Update packages
+RUN apt-get update && apt-get upgrade -y
 
+# OpenVPN
+RUN apt-get install -y openvpn inetutils-traceroute inetutils-ping wget curl \
+    && curl -L https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz | tar -C /usr/local/bin -xzv \
+    && rm -rfv dockerize-linux-amd64-v0.6.1.tar.gz
+
+# Squid
+RUN apt-get install -y squid3 \
+    && mv -f /etc/squid/squid.conf /etc/squid/squid.conf.original
+
+# Clean up
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Enabling SSH
 RUN rm -f /etc/service/sshd/down
@@ -35,8 +42,9 @@ RUN rm -f /etc/service/sshd/down
 # Enabling the insecure key permanently
 RUN /usr/sbin/enable_insecure_key
 
-# Expose port and run
+# Expose ports
 EXPOSE 22
+EXPOSE 3128
 
 # Volumes
 VOLUME /config
@@ -64,3 +72,10 @@ RUN mkdir /etc/service/openvpn \
     && ln -s /etc/openvpn/bin/openvpn-finish.sh /etc/service/openvpn/finish \
     && chmod +x /etc/service/openvpn/run \
     && chmod +x /etc/service/openvpn/finish
+
+# Squid scripts and configuration
+ADD squid/ /etc/squid/
+RUN chmod +x /etc/squid/squid-*.sh \
+    && mkdir -p /etc/service/squid \
+    && ln -s /etc/squid/squid-run.sh /etc/service/squid/run \
+    && ln -s /etc/squid/squid-finish.sh /etc/service/squid/finish

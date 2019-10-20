@@ -1,23 +1,25 @@
-version: '2'
+version: '2.1'
 services:
-  openvpn-client:
-    build: .
-    container_name: openvpn-client
-    image: dceschmidt/openvpn-client
+  openvpn-proxyd:
+    build:
+      context: .
+      dockerfile: Dockerfile
     privileged: true
     restart: always
     ports:
       - "1022:22"
+      - "3128:3128"
+    # Setting the DNS is important
     dns:
-      - 8.8.8.8
-      - 8.8.4.4
+      - "${DNS_SERVER_1:-1.1.1.1}"
+      - "${DNS_SERVER_2:-8.8.8.8}"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
       - ./tmp/config:/config
     environment:
-      OPENVPN_PROVIDER: EXPRESSVPN
-      OPENVPN_USERNAME: ""
-      OPENVPN_PASSWORD: ""
-      OPENVPN_OPTS: "--inactive 3600 --ping 10 --ping-exit 60"
-      OPENVPN_CONFIG: brazil_2_udp
+      OPENVPN_PROVIDER: "${OPENVPN_PROVIDER}"
+      OPENVPN_USERNAME: "${OPENVPN_USERNAME}"
+      OPENVPN_PASSWORD: "${OPENVPN_PASSWORD}"
+      # TorGuard already sets a 'keepalive' which is an alias for ping + ping-restart
+      # OPENVPN_OPTS: "--inactive 3600 --ping 10 --ping-exit 60"
+      OPENVPN_CONFIG: "${OPENVPN_CONFIG}"
       LOCAL_NETWORK: 10.0.0.0/24

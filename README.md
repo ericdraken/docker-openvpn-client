@@ -1,10 +1,9 @@
-# Docker OpenVPN Client
+# Docker OpenVPN Proxy Server
 Build based on 
 * [phusion/baseimage-docker](https://github.com/phusion/baseimage-docker)
 * [haugene/docker-transmission-openvpn](https://github.com/haugene/docker-transmission-openvpn), even most of this README.
 
-Docker container which runs OpenVPN client. Can be used as base image. Ex.: [Squid Proxy using OpenVPN](https://github.com/schmas/docker-openvpn-proxy) 
-It bundles certificates and configurations for the following VPN providers:
+Docker container which runs OpenVPN client and a Squid proxy server. It bundles certificates and configurations for the following VPN providers:
 * Anonine
 * BTGuard
 * Cryptostorm
@@ -24,10 +23,15 @@ It bundles certificates and configurations for the following VPN providers:
 * TorGuard (**July, 2019 with OpenVPN 2.4**)
 * UsenetServerVPN
 
-## Run container from Docker registry
-The container is available from the Docker registry and this is the simplest way to get it.
-To run the container use this command:
+## Building the container
+To build this container, clone the repository and cd into it.
 
+### Build it:
+```
+$ cd <docker-openvpn-client>
+$ docker build -t openvpn-proxy .
+```
+### Run it:
 ```
 $ docker run --privileged  -d \
               -e "OPENVPN_PROVIDER=PIA" \
@@ -35,7 +39,8 @@ $ docker run --privileged  -d \
               -e "OPENVPN_USERNAME=user" \
               -e "OPENVPN_PASSWORD=pass" \
               -p 1022:22 \
-              dceschmidt/openvpn-client
+              -p 3128:3128 \
+              openvpn-proxy
 ```
 
 You must set the environment variables `OPENVPN_PROVIDER`, `OPENVPN_USERNAME` and `OPENVPN_PASSWORD` to provide basic connection details.
@@ -85,7 +90,7 @@ If you have this problem use dockers --dns flag to override the resolv.conf of t
 For example use googles dns servers by adding --dns 8.8.8.8 --dns 8.8.4.4 as parameters to the usual run command.
 
 #### Restart container if connection is lost
-If the VPN connection fails or the container for any other reason loses connectivity, you want it to recover from it. One way of doing this is to set environment variable `OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60` and use the --restart=always flag when starting the container. This way OpenVPN will exit if ping fails over a period of time which will stop the container and then the Docker deamon will restart it.
+If the VPN connection fails or the container for any other reason loses connectivity, you want it to recover from it. One way of doing this is to set environment variable `OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60` and use the --restart=always flag when starting the container. This way OpenVPN will exit if ping fails over a period of time which will stop the container and then the Docker daemon will restart it.
 
 #### Questions?
 If you are having issues with this container please submit an issue on GitHub.
@@ -100,26 +105,3 @@ You clone this repository and create a new folder under "openvpn" where you put 
 There is a script called adjustConfigs.sh that could help you. After putting your .ovpn files in a folder, run that script with your folder name as parameter and it will try to do the changes descibed above. If you use it or not, reading it might give you some help in what you're looking to change in the .ovpn files.
 
 Once you've finished modifying configs, you build the container and run it with OPENVPN_PROVIDER set to the name of the folder of configs you just created (it will be lowercased to match the folder names). And that should be it!
-
-So, you've just added your own provider and you're feeling pretty good about it! Why don't you fork this repository, commit and push your changes and submit a pull request? Share your provider with the rest of us! :) Please submit your PR to the dev branch in that case.
-
-## Building the container yourself
-To build this container, clone the repository and cd into it.
-
-### Build it:
-```
-$ cd <docker-openvpn-client>
-$ docker build -t openvpn-client .
-```
-### Run it:
-```
-$ docker run --privileged  -d \
-              -e "OPENVPN_PROVIDER=PIA" \
-              -e "OPENVPN_CONFIG=Netherlands" \
-              -e "OPENVPN_USERNAME=user" \
-              -e "OPENVPN_PASSWORD=pass" \
-              -p 1022:22 \
-              openvpn-client
-```
-
-This will start a container as described in the "Run container from Docker registry" section.
