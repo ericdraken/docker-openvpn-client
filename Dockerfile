@@ -18,9 +18,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     OPENVPN_PASSWORD=**None** \
     OPENVPN_PROVIDER=**None**
 
-# Use baseimage-docker's init system.
-CMD ["/sbin/my_init"]
-
 # Update packages
 RUN apt-get update && apt-get upgrade -y
 
@@ -79,3 +76,8 @@ RUN chmod +x /etc/squid/squid-*.sh \
     && mkdir -p /etc/service/squid \
     && ln -s /etc/squid/squid-run.sh /etc/service/squid/run \
     && ln -s /etc/squid/squid-finish.sh /etc/service/squid/finish
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# Use baseimage-docker's init system.
+CMD ["/sbin/my_init"]

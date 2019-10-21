@@ -1,11 +1,14 @@
-version: '2.1'
+version: '3'
 services:
   openvpn-proxyd:
     build:
       context: .
       dockerfile: Dockerfile
-    privileged: true
     restart: always
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
     ports:
       - "1022:22"
       - "3128:3128"
