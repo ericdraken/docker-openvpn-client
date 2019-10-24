@@ -1,0 +1,30 @@
+#!/bin/bash
+
+if [[ $# -ne 2 ]]; then
+    echo "Illegal number of parameters. Expected 2"
+    exit 1
+fi
+
+PASSTHRU_PROXY=$1
+HEALTH_TEST_URL=$2
+
+CMD="curl -x $PASSTHRU_PROXY --connect-timeout 10 --max-time 10 --fail --silent $HEALTH_TEST_URL"
+REAL_IP=$($CMD || exit 2)
+if [[ "$?" -ne 0 ]]; then
+    echo "REAL_IP test failed: $CMD" >&2
+    exit 2
+fi
+
+CMD="curl --connect-timeout 10 --max-time 10 --fail --silent $HEALTH_TEST_URL"
+VPN_IP=$($CMD || exit 3)
+if [[ $? -ne 0 ]]; then
+    echo "VPN_IP test failed: $CMD" >&2
+    exit 3
+fi
+
+if [ "$VPN_IP" == "$REAL_IP" ]; then
+    echo "VAN_IP and REAL_IP are the same. VPN not working" >&2
+    exit 4
+else
+    exit 0
+fi

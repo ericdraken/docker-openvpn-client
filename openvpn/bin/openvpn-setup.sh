@@ -46,7 +46,7 @@ else
 fi
 
 if [ -n "${LOCAL_NETWORK-}" ]; then
-  eval $(/sbin/ip r l m 0.0.0.0 | awk '{if($5!="tun0"){print "GW="$3"\nINT="$5; exit}}')
+  eval $(/sbin/ip r l m 0 | awk '{if($5!="tun0"){print "GW="$3"\nINT="$5; exit}}')
   if [ -n "${GW-}" -a -n "${INT-}" ]; then
     echo "adding route to local network $LOCAL_NETWORK via $GW dev $INT"
     /sbin/ip r a "$LOCAL_NETWORK" via "$GW" dev "$INT"
