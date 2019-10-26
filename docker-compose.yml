@@ -5,28 +5,24 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: Dockerfile-nginx
+      dockerfile: nginx.dockerfile
+    restart: always
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./logs:/var/log/nginx
     depends_on:
       - openvpn-proxyd
     ports:
       - "${PROXY_PORT:-5000}:5000"
-      - 5001:5001
-#    expose:
-#      - 5001
-    dns:
-      - "${DNS_SERVER_1:-1.1.1.1}"
-      - "${DNS_SERVER_2:-8.8.8.8}"
-#    healthcheck:
-#      test: "healthcheck ${PROXY_PORT:-5000} ${TEST_URL:-https://ipinfo.io/ip}"
-#      interval: 60s
-#      retries: 30
+    healthcheck:
+      test: "healthcheck ${PROXY_PORT:-5000} ${TEST_URL:-https://ipinfo.io/ip}"
+      interval: 60s
+      retries: 4
 
   openvpn-proxyd:
     build:
       context: .
-      dockerfile: Dockerfile-openvpn
+      dockerfile: openvpn.dockerfile
     restart: always
     cap_add:
       - NET_ADMIN
@@ -37,12 +33,6 @@ services:
     dns:
       - "${DNS_SERVER_1:-1.1.1.1}"
       - "${DNS_SERVER_2:-8.8.8.8}"
-#    volumes:
-#      - ./tmp/config:/config
-#    healthcheck:
-#      test: "healthcheck nginx:5001 ${TEST_URL:-https://ipinfo.io/ip}"
-#      interval: 60s
-#      retries: 30
     environment:
       OPENVPN_OPTS: "--inactive 3600 --verb 4"
       OPENVPN_PROVIDER: "${OPENVPN_PROVIDER}"
